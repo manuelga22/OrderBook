@@ -4,28 +4,29 @@
 class OrderNode {
 
 private:
-	uint64_t orderId;
-    OrderType orderType;
-	float price;
-    int quantity;
+
     OrderNode* next = nullptr;
     OrderNode* prev = nullptr;
+
+	// price is scaled using PRICE_SCALE_FACTOR to avoid floating point precision issues
+	int64_t price = 0;
+	OrderType orderType = OrderType::UNDEFINED;
+	uint32_t quantity = 0;
+
 public:
    
-    OrderNode(): price(-1.0), quantity(-1), next(nullptr), prev(nullptr) {
-        // Code inside the body runs after variables are initialized
-    }
+	OrderNode() = default;
 
-	uint64_t getOrderId() const {
-		return orderId;
-	}
-
-	int getQuantity() const {
-		return quantity;
-	}
-
-	float getPrice() const {
+	int64_t getPrice() const {
 		return price;
+	}
+
+	OrderType getOrderType() const {
+		return orderType;
+	}
+
+	uint32_t getQuantity() const {
+		return quantity;
 	}
 
 	OrderNode* getNext() const {
@@ -36,24 +37,20 @@ public:
 		return prev;
 	}
 
-	void setQuantity(int quantity) {
-		this->quantity = quantity;
+	void setPrice(float price) {
+		this->price = price;
 	}
 
 	void setOrderType(OrderType orderType) {
 		this->orderType = orderType;
 	}
 
+	void setQuantity(int quantity) {
+		this->quantity = quantity;
+	}
+
 	void setNext(OrderNode* next) {
 		this->next = next;
-	}
-
-	float getPrice() {
-		return price;
-	}
-
-	void setPrice(float price) {
-		this->price = price;
 	}
 
 	void setPrev(OrderNode* prev) {
@@ -62,6 +59,6 @@ public:
 
 	void printOrderNode() {
 		std::cout << "Printing Order Node: " << std::endl;
-		std::cout << "Order ID: " << orderId << ", Price: " << price << ", Quantity: " << quantity << std::endl;
+		std::cout <<" Price: " << price << ", Quantity: " << quantity << std::endl;
 	}
 };

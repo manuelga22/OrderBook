@@ -7,32 +7,34 @@ using std::cout;
 
 class PriceLevel
 {
-
 private:
 	OrderNode* head = nullptr;
 	OrderNode* tail = nullptr;
 public:
+
+	PriceLevel() = default;
 
 	OrderNode* popLastOrder() {
 		// when there are no orders in the price level.
 		if (head == nullptr) {
 			return nullptr;
 		}
-		auto oldHead = head;
+		OrderNode* oldHead = head;
 
 		// when there is only one order in the price level.
 		if (head == tail) {
 			head = nullptr;
-			tail = head;
+			tail = nullptr;
 			return oldHead;
 		}
 		
-		auto newHead = head->getPrev();
-		newHead->setNext(nullptr);
+		OrderNode* newHead = head->getNext();
+		newHead->setPrev(nullptr);
 		head = newHead;
 		
 		// deallocate old head
 		oldHead->setPrev(nullptr);
+		oldHead->setNext(nullptr);
 
 		return oldHead;
 	}
@@ -40,11 +42,15 @@ public:
 	void addOrder(OrderNode* order) {
 		if (head == nullptr) {
 			head = order;
+			tail = head;
+		} else if (head == tail) {
+			head->setNext(order);
+			order->setPrev(head);
+			order->setNext(nullptr);
 			tail = order;
-		}
-		else {
-			order->setNext(tail);
-			tail->setPrev(order);
+		} else {
+			order->setPrev(tail);
+			tail->setNext(order);
 			tail = order;
 		}
 	}
@@ -53,33 +59,43 @@ public:
 		auto prevNode = node->getPrev();
 		auto nextNode = node->getNext();
 
-		node->setNext(nullptr);
-		node->setPrev(nullptr);
 
-		if (prevNode != nullptr && nextNode != nullptr) {
+		if (prevNode && nextNode) {
 			prevNode->setNext(nextNode);
 			nextNode->setPrev(prevNode);
 		}
-		else if (prevNode != nullptr && nextNode == nullptr) {
-			prevNode->setNext(nullptr);
-			tail = prevNode;
-		}
-		else if (prevNode == nullptr && nextNode != nullptr) {
-			nextNode->setPrev(nullptr);
-			head = nextNode;
-		}
-		else {
+		else if (tail == node && head == node) {
 			head = nullptr;
 			tail = nullptr;
 		}
+		else if (tail == node) {
+			prevNode->setNext(nullptr);
+			tail = prevNode;
+		}
+		else if (head == node) {
+			nextNode->setPrev(nullptr);
+			head = nextNode;
+		}
+
+		node->setNext(nullptr);
+		node->setPrev(nullptr);
 	}
 
 	void printPriceLevel() {
-		OrderNode* current = tail;
+		OrderNode* current = head;
 		cout << "Price Level: " << std::endl;
 		while (current != nullptr) {
-			cout << "Order ID: " << current->getOrderId() << ", Price: " << current->getPrice() << ", Quantity: " << current->getQuantity() << std::endl;
+			cout <<  " Price: " << current->getPrice() << ", Quantity: " << current->getQuantity() << std::endl;
 			current = current->getNext();
+		}
+	}
+
+	~PriceLevel() {
+		OrderNode* current = head;
+		while (current != nullptr) {
+			OrderNode* next = current->getNext();
+			delete current;
+			current = next;
 		}
 	}
 

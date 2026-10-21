@@ -15,8 +15,11 @@ int main() {
 	order2.setQuantity(200);
 	order2.setPrice(10.5);
 
+	OrderNode copyOrder = order2;
+
 	pl.addOrder(&order);
 	pl.addOrder(&order2);
+	pl.addOrder(&copyOrder);
 	pl.printPriceLevel();
 
 	pl.removeNode(&order2);
