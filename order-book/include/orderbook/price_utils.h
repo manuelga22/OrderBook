@@ -4,11 +4,11 @@
 #include <cstdlib>
 #include <string>
 #include <string_view>
+#include "orderbook/alias.h"
 
 // Prices are stored as fixed-point integers in units of 1 / PRICE_SCALE.
 // With a scale of 10^4, the smallest representable tick is 0.0001 and
-// $123.4567 is stored as the integer 1234567.
-using Price = int64_t;
+// $123.4567 is stored as the integer 1234567. (the Price alias lives in alias.h)
 
 constexpr int64_t PRICE_SCALE = 10000;      // 4 decimal places
 constexpr int PRICE_DECIMALS = 4;

@@ -1,6 +1,6 @@
 #pragma once
 #include <iostream>
-#include "OrderNode.h"
+#include "orderbook/OrderNode.h"
 
 using std::cout;
 
@@ -78,6 +78,32 @@ public:
 
 		node->setNext(nullptr);
 		node->setPrev(nullptr);
+	}
+
+	void attemptFill(OrderNode* order) {
+		OrderNode* current = head;
+
+		// Attempt to fill the order with the orders in the price level
+		while (current != nullptr) {
+
+			current->fillQuantity(order->getQuantity());
+			order->fillQuantity(current->getQuantity());
+
+			if (current->getQuantityRemaining() == 0) {
+				removeNode(current);
+			}
+
+			if (order->getQuantityRemaining() == 0) {
+				return;
+			}
+
+			current = current->getNext();
+		}
+
+		// If order wasn't filled completely, we add it to the order book.
+		if (order->getQuantityRemaining() > 0) {
+			addOrder(order);
+		}
 	}
 
 	void printPriceLevel() {

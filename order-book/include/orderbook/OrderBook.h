@@ -5,11 +5,12 @@
 #include <limits>
 #include <functional>
 #include <unordered_map>
-#include "PriceLevel.h"
-#include "OrderType.h"
-#include "price_utils.h"
+#include "orderbook/PriceLevel.h"
+#include "orderbook/OrderType.h"
+#include "orderbook/price_utils.h"
+#include "orderbook/alias.h"
 
-// NodeId is defined in OrderNode.h (included via PriceLevel.h)
+// NodeId, Price and Quantity are defined in alias.h
 using PriceLimit = std::numeric_limits<Price>;
 
 // Asks are in ascending order, bids are in descending order. (best Bid/Ask are first in the map)
@@ -33,6 +34,19 @@ private:
 	// price maps to a price level, which contains a linked list of orders at that price
 	AskBook Asks;
 	BidsBook Bids;
+
+	bool canMatch(OrderType type, Price price) const {
+		if (type == OrderType::BUY) {
+			return !Asks.empty() && price >= getBestAsk().price;
+				;
+		}
+		else if (type == OrderType::SELL) {
+			return !Bids.empty() && price <= getBestBid().price;
+		}
+		else {
+			throw std::invalid_argument("Invalid order type");
+		}
+	}
 
 public:
 
@@ -59,7 +73,7 @@ public:
 			order->setOrderId(nextOrderId++);
 		}
 
-		int64_t price = order->getPrice();
+		Price price = order->getPrice();
 
 		if (order->getOrderType() == OrderType::BUY) {
 			Bids[price].addOrder(order);
@@ -76,6 +90,18 @@ public:
 
 		orderBook[order->getOrderId()] = order;
 	}
+
+	void attemptFill(OrderNode* order) {
+
+		Price p = order->getPrice();
+		OrderType t = order->getOrderType();
+		if (t == OrderType::BUY && Asks.find(p) != Asks.end()) {
+			
+			PriceLevel pl = Asks[p];
+			pl.attemptFill(order);
+		}
+	}
+		
 
 	void cancelOrder(uint64_t orderId) {
 

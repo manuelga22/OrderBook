@@ -15,36 +15,39 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="OrderBook.h">
+    <ClInclude Include="include\orderbook\OrderBook.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="OrderNode.h">
+    <ClInclude Include="include\orderbook\OrderNode.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="DataSource.h">
+    <ClInclude Include="include\orderbook\alias.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="OrderType.h">
+    <ClInclude Include="include\orderbook\DataSource.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="PriceLevel.h">
+    <ClInclude Include="include\orderbook\OrderType.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\orderbook\PriceLevel.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\resource.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="price_utils.h">
+    <ClInclude Include="include\orderbook\price_utils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="OrderBook.cpp">
+    <ClCompile Include="src\OrderBook.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="PriceLevel.cpp">
+    <ClCompile Include="src\PriceLevel.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="main.cpp">
+    <ClCompile Include="src\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

@@ -1,8 +1,8 @@
 #include "pch.h"
 #include "CppUnitTest.h"
 
-#include "price_utils.h"
-#include "OrderBook.h"
+#include "orderbook/price_utils.h"
+#include "orderbook/OrderBook.h"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 

@@ -1,8 +1,6 @@
 #pragma once
-#include <cstdint>
-#include "OrderType.h"
-
-using NodeId = uint64_t;
+#include "orderbook/OrderType.h"
+#include "orderbook/alias.h"
 
 class OrderNode {
 
@@ -14,9 +12,11 @@ private:
 	// 0 is reserved for "unassigned"; the OrderBook stamps a real id on add()
 	NodeId orderId = 0;
 	// price is scaled using PRICE_SCALE_FACTOR to avoid floating point precision issues
-	int64_t price = 0;
+	Price price = 0;
 	OrderType orderType = OrderType::UNDEFINED;
-	uint32_t quantity = 0;
+	Quantity quantity = 0;
+	Quantity quantityFilled = 0;
+
 
 public:
 
@@ -31,35 +31,20 @@ public:
 		orderType(other.orderType),
 		quantity(other.quantity) {}
 
-	NodeId getOrderId() const {
-		return orderId;
-	}
-
-	int64_t getPrice() const {
-		return price;
-	}
-
-	OrderType getOrderType() const {
-		return orderType;
-	}
-
-	uint32_t getQuantity() const {
-		return quantity;
-	}
-
-	OrderNode* getNext() const {
-		return next;
-	}
-
-	OrderNode* getPrev() const {
-		return prev;
-	}
+	NodeId getOrderId() const { return orderId; }
+	Price getPrice() const { return price; }
+	OrderType getOrderType() const { return orderType; }
+	Quantity getQuantity() const { return quantity; }
+	Quantity getQuantityFilled() const { return quantityFilled; }
+	Quantity getQuantityRemaining() const { return getQuantity() - getQuantityFilled(); }
+	OrderNode* getNext() const { return next; }
+	OrderNode* getPrev() const { return prev; }
 
 	void setOrderId(NodeId orderId) {
 		this->orderId = orderId;
 	}
 
-	void setPrice(int64_t price) {
+	void setPrice(Price price) {
 		this->price = price;
 	}
 
@@ -67,7 +52,7 @@ public:
 		this->orderType = orderType;
 	}
 
-	void setQuantity(int quantity) {
+	void setQuantity(Quantity quantity) {
 		this->quantity = quantity;
 	}
 
@@ -77,6 +62,13 @@ public:
 
 	void setPrev(OrderNode* prev) {
 		this->prev = prev;
+	}
+
+	void fillQuantity(Quantity quantityFilled) {
+		if (quantityFilled > getQuantityRemaining()) {
+			throw std::invalid_argument("Cannot fill more than remaining quantity");
+		}
+		this->quantityFilled += quantityFilled;
 	}
 
 	void printOrderNode() {
