@@ -59,7 +59,7 @@ public:
 		this->orderId = orderId;
 	}
 
-	void setPrice(float price) {
+	void setPrice(int64_t price) {
 		this->price = price;
 	}
 

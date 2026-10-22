@@ -30,10 +30,10 @@
     <ClInclude Include="PriceLevel.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="OrderId.h">
+    <ClInclude Include="..\resource.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\resource.h">
+    <ClInclude Include="price_utils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

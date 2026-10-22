@@ -10,8 +10,8 @@
 // $123.4567 is stored as the integer 1234567.
 using Price = int64_t;
 
-inline constexpr int64_t PRICE_SCALE = 10000;      // 4 decimal places
-inline constexpr int PRICE_DECIMALS = 4;
+constexpr int64_t PRICE_SCALE = 10000;      // 4 decimal places
+constexpr int PRICE_DECIMALS = 4;
 
 // Parse a decimal string such as "123.4567" into fixed-point ticks WITHOUT
 // routing through double, so no floating-point rounding error is introduced.

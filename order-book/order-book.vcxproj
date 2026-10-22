@@ -143,10 +143,10 @@
     <ClInclude Include="..\resource.h" />
     <ClInclude Include="DataSource.h" />
     <ClInclude Include="OrderBook.h" />
-    <ClInclude Include="OrderId.h" />
     <ClInclude Include="OrderNode.h" />
     <ClInclude Include="OrderType.h" />
     <ClInclude Include="PriceLevel.h" />
+    <ClInclude Include="price_utils.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
