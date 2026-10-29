@@ -150,8 +150,11 @@
     <ClInclude Include="include\orderbook\OrderType.h" />
     <ClInclude Include="include\orderbook\PriceLevel.h" />
     <ClInclude Include="include\orderbook\price_utils.h" />
+    <ClInclude Include="include\orderbook\Trade.h" />
+    <ClInclude Include="include\orderfeeder\OrderFeeder.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="OrderFeeder.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\OrderBook.cpp" />
     <ClCompile Include="src\PriceLevel.cpp" />

@@ -38,72 +38,95 @@ public:
 		return oldHead;
 	}
 
-	void addOrder(OrderNode* order) {
+	void addOrder(OrderNode& order) {
 		if (head == nullptr) {
-			head = order;
+			head = &order;
 			tail = head;
 		} else if (head == tail) {
-			head->setNext(order);
-			order->setPrev(head);
-			order->setNext(nullptr);
-			tail = order;
+			head->setNext(&order);
+			order.setPrev(head);
+			order.setNext(nullptr);
+			tail = &order;
 		} else {
-			order->setPrev(tail);
-			tail->setNext(order);
-			tail = order;
+			order.setPrev(tail);
+			tail->setNext(&order);
+			tail = &order;
 		}
 	}
 
-	void removeNode(OrderNode* node) {
-		auto prevNode = node->getPrev();
-		auto nextNode = node->getNext();
+	void removeNode(OrderNode& node) {
+		auto prevNode = node.getPrev();
+		auto nextNode = node.getNext();
 
 
 		if (prevNode && nextNode) {
 			prevNode->setNext(nextNode);
 			nextNode->setPrev(prevNode);
 		}
-		else if (tail == node && head == node) {
+		else if (tail == &node && head == &node) {
 			head = nullptr;
 			tail = nullptr;
 		}
-		else if (tail == node) {
+		else if (tail == &node) {
 			prevNode->setNext(nullptr);
 			tail = prevNode;
 		}
-		else if (head == node) {
+		else if (head == &node) {
 			nextNode->setPrev(nullptr);
 			head = nextNode;
 		}
 
-		node->setNext(nullptr);
-		node->setPrev(nullptr);
+		node.setNext(nullptr);
+		node.setPrev(nullptr);
 	}
 
-	void attemptFill(OrderNode* order) {
+	Trades attemptFill(OrderNode& order) {
 		OrderNode* current = head;
+		OrderNode* prev = nullptr;
+		Trades trades;
+
+		OrderType orderType = order.getOrderType();
+
+		TradeInfo bidTrade;
+		TradeInfo askTrade;
 
 		// Attempt to fill the order with the orders in the price level
 		while (current != nullptr) {
 
-			current->fillQuantity(order->getQuantity());
-			order->fillQuantity(current->getQuantity());
+			current->fillQuantity(order.getQuantityRemaining());
+			order.fillQuantity(current->getQuantity());
 
-			if (current->getQuantityRemaining() == 0) {
-				removeNode(current);
+			if (orderType == OrderType::BUY) {
+				TradeInfo bidTrade{0, order.getPrice(), order.getQuantityFilled()};
+				TradeInfo askTrade{0, current->getPrice(), current->getQuantityFilled()};
+				trades.push_back(Trade(bidTrade, askTrade));
+			}
+			else {
+				bidTrade = TradeInfo {0, current->getPrice(), current->getQuantityFilled()};
+				askTrade = TradeInfo {0, order.getPrice(), order.getQuantityFilled()};
+				trades.push_back(Trade(bidTrade, askTrade));
 			}
 
-			if (order->getQuantityRemaining() == 0) {
+			prev = current;
+			current = current->getNext();
+
+			// Remove the node from the price level if it has been completely filled
+			if (prev->getQuantityRemaining() == 0) {
+				removeNode(*prev);
+			}
+
+			if (order.getQuantityRemaining() == 0) {
 				return;
 			}
 
-			current = current->getNext();
 		}
 
 		// If order wasn't filled completely, we add it to the order book.
-		if (order->getQuantityRemaining() > 0) {
+		if (order.getQuantityRemaining() > 0) {
 			addOrder(order);
 		}
+
+		return trades;
 	}
 
 	void printPriceLevel() {

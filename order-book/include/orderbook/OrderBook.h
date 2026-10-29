@@ -9,13 +9,15 @@
 #include "orderbook/OrderType.h"
 #include "orderbook/price_utils.h"
 #include "orderbook/alias.h"
+#include "orderbook/Trade.h"
 
 // NodeId, Price and Quantity are defined in alias.h
 using PriceLimit = std::numeric_limits<Price>;
 
 // Asks are in ascending order, bids are in descending order. (best Bid/Ask are first in the map)
-using AskBook = std::map<Price, PriceLevel>;
+using AskBook = std::map<Price, PriceLevel, std::less<Price>>;
 using BidsBook = std::map<Price, PriceLevel, std::greater<Price>>;
+using Trades = std::vector<Trade>;
 
 struct BestPrice {
 	Price price;
@@ -35,75 +37,103 @@ private:
 	AskBook Asks;
 	BidsBook Bids;
 
-	bool canMatch(OrderType type, Price price) const {
-		if (type == OrderType::BUY) {
-			return !Asks.empty() && price >= getBestAsk().price;
-				;
+	// Fill an incoming order against the resting orders at its own price level
+	// in the given book. Templated so it works for both AskBook and BidsBook,
+	// which differ only in their comparator.
+	template <typename Book>
+	Trades fillAtPrice(Book& book, OrderNode& order) {
+
+		if (book.empty()) {
+			return {};
 		}
-		else if (type == OrderType::SELL) {
-			return !Bids.empty() && price <= getBestBid().price;
+
+		std::unique_ptr<BestPrice> bp;
+
+		if constexpr (std::is_same_v<Book, AskBook>) {
+			// Incoming BUY: ask must be <= buy limit
+			bp = std::make_unique(getBestAsk());
+			if (bp->price >= order.getPrice()) {
+				return {};
+			}
 		}
-		else {
-			throw std::invalid_argument("Invalid order type");
+		else if constexpr (std::is_same_v<Book, BidsBook>) {
+			// Incoming SELL: bid must be >= sell limit
+			bp = std::make_unique(getBestBid());
+			if (bp->price <= order.getPrice()) {
+				return {};
+			}
 		}
+
+		return bp->priceLevel->attemptFill(order);
 	}
+
 
 public:
 
-	BestPrice getBestBid() const noexcept {
+	// Returns the best (highest) bid, or nullptr when the book is empty.
+	// The caller owns the returned BestPrice and must delete it.
+	BestPrice* getBestBid() const {
 		if (Bids.empty()) {
-			return { -PriceLimit::min(), nullptr };
+			return nullptr;
 		}
 		auto bestBidIt = Bids.begin();
-		return { bestBidIt->first, &(bestBidIt->second) };
+		return new BestPrice{ bestBidIt->first, &(bestBidIt->second) };
 	}
 
-	BestPrice getBestAsk() const noexcept {
+	// Returns the best (lowest) ask, or nullptr when the book is empty.
+	// The caller owns the returned BestPrice and must delete it.
+	BestPrice* getBestAsk() const {
 		if (Asks.empty()) {
-			return { PriceLimit::max(), nullptr};
+			return nullptr;
 		}
 		auto bestAskIt = Asks.begin();
-		return { bestAskIt->first, &(bestAskIt->second) };
+		return new BestPrice{ bestAskIt->first, &(bestAskIt->second) };
 	}
 
-	NodeId add(OrderNode* order) {
+	// The book takes ownership of the referenced node (PriceLevel deletes it),
+	// so callers must pass a heap-allocated OrderNode that outlives the book.
+	NodeId add(OrderNode& order) {
 		// Stamp an exchange-generated id only if the order doesn't already have
 		// one, so re-adding during modifyOrder preserves its original id.
-		if (order->getOrderId() == 0) {
-			order->setOrderId(nextOrderId++);
+		if (order.getOrderId() == 0) {
+			order.setOrderId(nextOrderId++);
 		}
 
-		Price price = order->getPrice();
+		Price price = order.getPrice();
 
-		if (order->getOrderType() == OrderType::BUY) {
+		if (order.getOrderType() == OrderType::BUY) {
 			Bids[price].addOrder(order);
 		}
-		else if (order->getOrderType() == OrderType::SELL) {
+		else if (order.getOrderType() == OrderType::SELL) {
 			Asks[price].addOrder(order);
 		}
-		else if (order->getOrderType() == OrderType::UNDEFINED) {
+		else if (order.getOrderType() == OrderType::UNDEFINED) {
 			throw std::invalid_argument("Order type is undefined");
 		}
 		else {
 			throw std::invalid_argument("Invalid order type");
 		}
 
-		orderBook[order->getOrderId()] = order;
+		orderBook[order.getOrderId()] = &order;
+		return order.getOrderId();
 	}
 
-	void attemptFill(OrderNode* order) {
+	Trades attemptFill(OrderNode& order) {
 
-		Price p = order->getPrice();
-		OrderType t = order->getOrderType();
-		if (t == OrderType::BUY && Asks.find(p) != Asks.end()) {
-			
-			PriceLevel pl = Asks[p];
-			pl.attemptFill(order);
+		OrderType t = order.getOrderType();
+
+		if (t == OrderType::BUY) {
+			return fillAtPrice(Asks, order);
 		}
+		else if (t == OrderType::SELL) {
+			return fillAtPrice(Bids, order);
+		}
+
+		return {};
 	}
 		
 
-	void cancelOrder(uint64_t orderId) {
+	void cancelOrder(NodeId orderId) {
 
 		if (orderBook.find(orderId) == orderBook.end()) {
 			throw std::invalid_argument("Order ID not found");
@@ -114,18 +144,18 @@ public:
 		auto orderPrice = orderNode->getPrice();
 		if (orderType == OrderType::BUY) {
 			auto& priceLevel = Bids[orderPrice];
-			priceLevel.removeNode(orderNode);
+			priceLevel.removeNode(*orderNode);
 		}
 		else if(orderType == OrderType::SELL) {
 			auto& priceLevel = Asks[orderPrice];
-			priceLevel.removeNode(orderNode);
+			priceLevel.removeNode(*orderNode);
 		}
 		delete orderNode;
 		orderBook.erase(orderId);
 
 	}
 
-	void modifyOrder(uint64_t orderId, float newPrice, int newQuantity) {
+	void modifyOrder(NodeId orderId, Price newPrice, Quantity newQuantity) {
 
 		if (orderBook.find(orderId) == orderBook.end()) {
 			throw std::invalid_argument("Order ID not found");
@@ -139,7 +169,7 @@ public:
 		if (orderNode->getPrice() != newPrice) {
 			OrderNode* orderCopy = new OrderNode(*orderNode);
 			cancelOrder(orderId);
-			add(orderCopy);
+			add(*orderCopy);
 		}
 		
 

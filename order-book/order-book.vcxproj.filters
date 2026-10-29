@@ -39,6 +39,12 @@
     <ClInclude Include="include\orderbook\price_utils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\orderfeeder\OrderFeeder.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\orderbook\Trade.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\OrderBook.cpp">
@@ -48,6 +54,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="OrderFeeder.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
